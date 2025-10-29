@@ -56,6 +56,7 @@ public class StudentResource {
             @APIResponse(responseCode = "404", description = "Not found")
     })
     public Response getStudentByname(@RestPath @NotBlank String name) {
+        // Convert name column and the first argument to lower, compare, and return the first match.
         Student student = Student.find("LOWER(name) = LOWER(?1)", name).firstResult();
         if (student == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
@@ -82,7 +83,7 @@ public class StudentResource {
             @APIResponse(responseCode = "404", description = "Not found")
     })
     public Response getRandomStudent() {
-        // A db function using a query to randomize order and select the first.
+        // Order by db random() and return the first result.
         Student student = Student.find("order by function('random')").firstResult();
         if (student == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
