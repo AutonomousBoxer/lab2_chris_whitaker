@@ -82,6 +82,7 @@ public class StudentResource {
             @APIResponse(responseCode = "404", description = "Not found")
     })
     public Response getRandomStudent() {
+        // A db function using a query to randomize order and select the first.
         Student student = Student.find("order by function('random')").firstResult();
         if (student == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
@@ -98,12 +99,15 @@ public class StudentResource {
             @APIResponse(responseCode = "400", description = "Bad request")
     })
     public Response createStudent(@Valid Student student) {
+        // Reject supplied id.
         if (student.id != null) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Don't include an id when creating a student.").type(MediaType.TEXT_PLAIN).build();
         }
 
+        // Assign id on persist
         student.persist();
 
+        // Build location based on current uri.
         return Response.created(uriInfo.getBaseUriBuilder().path(StudentResource.class).path(student.id.toString()).build()).entity(student).build();
     }
 
@@ -112,7 +116,10 @@ public class StudentResource {
     @Transactional(REQUIRED)
     @Tag(name = "Delete")
     @Operation(summary = "Delete a student by id", description = "Deletes the student with the given id.")
-    @APIResponse(responseCode = "204", description = "No Content")
+    @APIResponses({
+        @APIResponse(responseCode = "204", description = "No Content"),
+        @APIResponse(responseCode = "404", description = "Not Found")
+    })
     public Response deleteStudent(@RestPath @Min(1) Long id) {
         boolean deleted = Student.deleteById(id);
         if (deleted) {
@@ -132,6 +139,7 @@ public class StudentResource {
             @APIResponse(responseCode = "404", description = "Not found")
     })
     public Response updateStudent(@RestPath @Min(1) Long id, @Valid Student student) {
+        // Prevent id changes/mismatches.
         if (student.id != null && !student.id.equals(id)) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Path id and body id must match.").type(MediaType.TEXT_PLAIN).build();
         }
@@ -141,6 +149,7 @@ public class StudentResource {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
+        // Update target fields.
         existing.name = student.name;
         existing.phone = student.phone;
         existing.grade = student.grade;
